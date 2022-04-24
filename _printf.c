@@ -1,82 +1,92 @@
-#include "main.h"
-#include <stdarg.h>
-
+#include "holberton.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 /**
- *checker - checkes whether next format is identifier
- *@arr:array of aidentifier
- *@format:next format to%
- *Return:int
+ * printIdentifiers - prints special characters
+ * @next: character after the %
+ * @arg: argument for the indentifier
+ * Return: the number of characters printed
+ * (excluding the null byte used to end output to strings)
  */
-int checker(char *arr, char format)
+
+int printIdentifiers(char next, va_list arg)
 {
-	int count = 0;
-	int k = 0;
-	int get = 1;
+	int functsIndex;
 
-	while (arr[k] != '\0')
-	{
-		count++;
-		k++;
-	}
-	for (k = 0; k < count; k++)
-	{
-		if (arr[k] == format)
-		{
-			get = 0;
-			break;
-		}
-	}
-	return (get);
+	identifierStruct functs[] = {
+		{"c", print_char},
+		{"s", print_str},
+		{"d", print_int},
+		{"i", print_int},
+		{"u", print_unsigned},
+		{"b", print_unsignedToBinary},
+		{"o", print_oct},
+		{"x", print_hex},
+		{"X", print_HEX},
+		{"S", print_STR},
+		{NULL, NULL}
+	};
 
+	for (functsIndex = 0; functs[functsIndex].indentifier != NULL; functsIndex++)
+	{
+		if (functs[functsIndex].indentifier[0] == next)
+			return (functs[functsIndex].printer(arg));
+	}
+	return (0);
 }
+
 /**
- * _printf - prints to output according to format
- * @format: character string
+ * _printf - mimic printf from stdio
+ * Description: produces output according to a format
+ * write output to stdout, the standard output stream
+ * @format: character string composed of zero or more directives
  *
- * Return:numbers of characters
+ * Return: the number of characters printed
+ * (excluding the null byte used to end output to strings)
+ * return -1 for incomplete identifier error
  */
 
 int _printf(const char *format, ...)
 {
-	int i = 0, j = 0;
+	unsigned int i;
+	int identifierPrinted = 0, charPrinted = 0;
+	va_list arg;
 
-	int (*f)(va_list);
-	va_list list;
-	int get;
-	char *arr = "cdisb%";
-
-	va_start(list, format);
-
-	if (format == NULL || !format[i + 1])
+	va_start(arg, format);
+	if (format == NULL)
 		return (-1);
-	while (format[i])
+
+	for (i = 0; format[i] != '\0'; i++)
 	{
-		if (format[i] == '%')
+		if (format[i] != '%')
 		{
-			if (format[i + 1])
-			{
-				get = checker(arr, format[i + 1]);
-				if (get == 1)
-				{
-					j += _putchar(format[i]);
-					j += _putchar(format[i + 1]);
-					i++;
-				}
-				else
-				{
-					f = caller(&format[i + 1]);
-					j += f(list);
-					i++;
-				}
-			}
+			_putchar(format[i]);
+			charPrinted++;
+			continue;
 		}
-		else
+		if (format[i + 1] == '%')
 		{
-			j += _putchar(format[i]);
+			_putchar('%');
+			charPrinted++;
+			i++;
+			continue;
 		}
-		i++;
+		if (format[i + 1] == '\0')
+			return (-1);
+
+		identifierPrinted = printIdentifiers(format[i + 1], arg);
+		if (identifierPrinted == -1 || identifierPrinted != 0)
+			i++;
+		if (identifierPrinted > 0)
+			charPrinted += identifierPrinted;
+
+		if (identifierPrinted == 0)
+		{
+			_putchar('%');
+			charPrinted++;
+		}
 	}
-	va_end(list);
-	return (j);
+	va_end(arg);
+	return (charPrinted);
 }
